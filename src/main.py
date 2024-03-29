@@ -32,6 +32,14 @@ def generate_pkce() -> tuple[str, str]:
     return code_verifier, code_challenge
 
 
+@app.get('/health')
+async def health() -> JSONResponse:
+    return JSONResponse(status_code=200, content={"status": "ok"})
+
+
+print("Running main.py")
+
+
 @app.get("/oauth/spotify/extension/redirect")
 async def spotify_extension_oauth_redirect(request: fastapi.Request) -> fastapi.Response:
     configuration: Configuration = Configuration()

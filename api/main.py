@@ -7,8 +7,8 @@ from typing import Optional
 import fastapi
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 
-from src.clients.spotify import SpotifyClient
-from src.configuration import Configuration
+from api.clients.spotify import SpotifyClient
+from api.configuration import Configuration
 from templates.extension_token import EXTENSION_TOKEN_TEMPLATE
 
 

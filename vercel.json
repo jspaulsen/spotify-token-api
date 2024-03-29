@@ -1,4 +1,5 @@
 {
+  "runtime": "python3.9",
 	"builds": [
 		{
 			"src": "src/main.py",

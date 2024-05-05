@@ -37,20 +37,18 @@ async def health() -> JSONResponse:
     return JSONResponse(status_code=200, content={"status": "ok"})
 
 
-print("Running main.py")
-
-
 @app.get("/oauth/spotify/extension/redirect")
-async def spotify_extension_oauth_redirect(request: fastapi.Request) -> fastapi.Response:
+async def spotify_extension_oauth_redirect(client_id: Optional[str] = None) -> fastapi.Response:
     configuration: Configuration = Configuration()
     redirect_uri = configuration.redirect_host + "/oauth/spotify/extension/callback"
     code_verifier, code_challenge = generate_pkce()
     scope = "+".join(configuration.spotify_scope)
+    client_id = client_id or configuration.spotify_client_id
 
     spotify_redirect_url = (
         "https://accounts.spotify.com/authorize" +
         f"?response_type=code" +
-        f"&client_id={configuration.spotify_client_id}" +
+        f"&client_id={client_id}" +
         f"&redirect_uri={redirect_uri}" +
         f"&code_challenge={code_challenge}" +
         f"&code_challenge_method=S256" + 
@@ -67,6 +65,15 @@ async def spotify_extension_oauth_redirect(request: fastapi.Request) -> fastapi.
         secure=False,
     )
 
+    # Set the client_id in a cookie
+    response.set_cookie(
+        "client_id",
+        client_id,
+        max_age=60,
+        httponly=True,
+        secure=False,
+    )
+
     return response
 
 
@@ -78,7 +85,18 @@ async def spotify_extension_oauth_callback(
     error_description: Optional[str] = None,
 ) -> JSONResponse:
     configuration = Configuration()
-    spotify_client = SpotifyClient(configuration.spotify_client_id)
+    client_id = request.cookies.get("client_id")
+
+    if not client_id:
+        return JSONResponse(
+            status_code=400,
+            content={
+                "error": "Invalid request",
+                "error_description": "Missing client_id cookie",
+            },
+        )
+    
+    spotify_client = SpotifyClient(client_id)
 
     if not code and not error:
         return JSONResponse(status_code=400, content={"error": "Invalid request"})
